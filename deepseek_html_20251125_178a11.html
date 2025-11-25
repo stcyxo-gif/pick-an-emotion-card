@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>情绪探索工具 - 了解你的情绪状态</title>
+    <meta name="description" content="通过直观的颜色饼图探索42种情绪状态，了解情绪表现、原因和应对方法">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        header {
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .description {
+            color: #555;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .instructions {
+            color: #7f8c8d;
+            font-style: italic;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            margin: 0 auto 25px;
+        }
+        
+        #emotionPieChart {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .emotions-list {
+            display: none;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .emotion-item {
+            width: calc(50% - 10px);
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            padding: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .emotion-item:active {
+            transform: scale(0.98);
+        }
+        
+        .card-container {
+            display: none;
+            width: 100%;
+            margin: 0 auto;
+            perspective: 1000px;
+        }
+        
+        .card {
+            width: 100%;
+            height: 420px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .card-front {
+            background: white;
+            color: #2c3e50;
+        }
+        
+        .card-front h2 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .card-front h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        
+        .card-front p {
+            font-size: 0.95rem;
+            margin-top: 10px;
+            color: #7f8c8d;
+        }
+        
+        .card-back {
+            background: white;
+            transform: rotateY(180deg);
+            overflow-y: auto;
+            text-align: left;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .card-back h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .card-back p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        
+        .card-back .section-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+        
+        .button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+            margin-top: 15px;
+            width: 100%;
+            max-width: 200px;
+        }
+        
+        .button:active {
+            background: #2980b9;
+            transform: scale(0.98);
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            max-width: 100%;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 3px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 6px;
+        }
+        
+        .legend-text {
+            font-size: 0.8rem;
+            color: #555;
+        }
+        
+        .tip {
+            margin-top: 10px;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>情绪探索工具</h1>
+            <p class="description">通过颜色饼图直观选择您当前的情绪状态，了解情绪的表现、原因和应对方法</p>
+            <p class="instructions">点击饼图中的颜色区域选择情绪大类，然后选择具体的情绪状态</p>
+        </header>
+        
+        <div class="chart-container">
+            <canvas id="emotionPieChart"></canvas>
+        </div>
+        
+        <div class="legend" id="emotionLegend">
+            <!-- 图例将通过JavaScript动态生成 -->
+        </div>
+        
+        <p class="tip">点击饼图区域选择情绪类别</p>
+        
+        <div class="emotions-list" id="emotionsList">
+            <!-- 情绪列表将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="card-container" id="cardContainer">
+            <div class="card">
+                <div class="card-face card-front">
+                    <h2 id="emotionName">情绪名称</h2>
+                    <h3 id="emotionCategory">情绪类别</h3>
+                    <p>点击卡片查看详情</p>
+                </div>
+                <div class="card-face card-back" id="cardBack">
+                    <!-- 卡片背面内容将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            <button class="button" id="backToList">返回情绪列表</button>
+            <button class="button" id="backToChart" style="display: none;">返回饼图</button>
+        </div>
+    </div>
+
+    <script>
+        // 情绪数据 - 按颜色分类
+        const emotionsData = {
+            "棕色": {
+                color: "#8B4513",
+                emotions: [
+                    {
+                        name: "后悔",
+                        description: "对过去决定或行为感到懊悔",
+                        cause: "做出了错误选择、错过了机会",
+                        coping: "接受无法改变的事实，从中学习经验，专注于现在能做的事情"
+                    },
+                    {
+                        name: "内疚",
+                        description: "认为自己做了错事而感到自责",
+                        cause: "违背了个人价值观、伤害了他人",
+                        coping: "承认错误，道歉并弥补，学会原谅自己"
+                    },
+                    {
+                        name: "尴尬",
+                        description: "在社交场合中感到不自在和难为情",
+                        cause: "行为失当、被他人关注、犯错被发现",
+                        coping: "理解人人都会尴尬，用幽默化解，转移注意力"
+                    },
+                    {
+                        name: "羞愧",
+                        description: "因自身缺陷或错误感到羞耻",
+                        cause: "未能达到期望、被公开批评",
+                        coping: "区分事实与感受，接受不完美，寻求支持"
+                    },
+                    {
+                        name: "失望",
+                        description: "期望未达成时的失落感",
+                        cause: "目标未实现、他人未达到预期",
+                        coping: "调整期望，寻找替代方案，关注积极面"
+                    },
+                    {
+                        name: "同情",
+                        description: "对他人的困境感同身受",
+                        cause: "目睹他人受苦、同理心强",
+                        coping: "提供适当帮助，保持适度距离，避免过度卷入"
+                    },
+                    {
+                        name: "伤心",
+                        description: "因失去或分离而感到悲伤",
+                        cause: "关系结束、失去重要事物",
+                        coping: "允许自己悲伤，寻求支持，逐步恢复日常活动"
+                    }
+                ]
+            },
+            "红色": {
+                color: "#FF0000",
+                emotions: [
+                    {
+                        name: "愤怒",
+                        description: "强烈的愤慨和不满情绪",
+                        cause: "受到不公平对待、权益被侵犯",
+                        coping: "深呼吸，暂时离开现场，用建设性方式表达感受"
+                    },
+                    {
+                        name: "嫉妒",
+                        description: "因他人拥有自己想要的东西而产生的不满",
+                        cause: "比较心理、自我价值感低",
+                        coping: "专注于自身成长，感恩已有事物，将嫉妒转化为动力"
+                    },
+                    {
+                        name: "怨恨",
+                        description: "对过去伤害的持续愤怒",
+                        cause: "未解决的冲突、长期积怨",
+                        coping: "尝试宽恕，与对方沟通或写信表达，寻求专业帮助"
+                    },
+                    {
+                        name: "反感",
+                        description: "强烈的排斥和不悦",
+                        cause: "违背价值观、道德冲突",
+                        coping: "明确界限，远离刺激源，保持理性思考"
+                    },
+                    {
+                        name: "烦躁",
+                        description: "持续的低强度愤怒，容易对小事发火",
+                        cause: "压力积累、睡眠不足、环境不适",
+                        coping: "找出压力源，适当休息，调整环境"
+                    }
+                ]
+            },
+            "橙色": {
+                color: "#FFA500",
+                emotions: [
+                    {
+                        name: "感激",
+                        description: "因他人或生活而产生的感恩之情",
+                        cause: "意识到被关爱、拥有美好事物",
+                        coping: "表达感谢，回馈他人，写感恩日记"
+                    },
+                    {
+                        name: "感动",
+                        description: "被美好事物触动的温暖感受",
+                        cause: "见证善意、经历感人时刻",
+                        coping: "珍惜当下，分享感受，传递温暖"
+                    },
+                    {
+                        name: "分享",
+                        description: "愿意与他人共同拥有的开放心态",
+                        cause: "丰盈感、连接需求",
+                        coping: "找到志同道合的人，平衡给予与接受"
+                    },
+                    {
+                        name: "爱",
+                        description: "深厚的情感连接和关怀",
+                        cause: "亲密关系、深厚友谊、家庭纽带",
+                        coping: "表达情感，投入时间精力，保持沟通"
+                    },
+                    {
+                        name: "付出",
+                        description: "乐于给予而不求回报",
+                        cause: "同情心、价值观、连接需求",
+                        coping: "设定健康界限，避免过度付出导致疲惫"
+                    },
+                    {
+                        name: "快乐",
+                        description: "愉悦和满足的情绪状态",
+                        cause: "达成目标、美好经历、积极思维",
+                        coping: "品味当下，创造更多快乐时刻，与人分享"
+                    },
+                    {
+                        name: "期待",
+                        description: "对未来的积极盼望",
+                        cause: "有目标、看到可能性",
+                        coping: "制定计划，享受期待过程，保持现实态度"
+                    }
+                ]
+            },
+            "绿色": {
+                color: "#008000",
+                emotions: [
+                    {
+                        name: "自豪",
+                        description: "因成就或品质而产生的满意感",
+                        cause: "克服挑战、实现目标、被认可",
+                        coping: "适当庆祝，分享成就，设定新目标"
+                    },
+                    {
+                        name: "自信",
+                        description: "对自身能力和价值的信任",
+                        cause: "过往成功经验、积极自我认知",
+                        coping: "积累小成功，正面自我对话，接受挑战"
+                    },
+                    {
+                        name: "自省",
+                        description: "反思自身思想和行为的状态",
+                        cause: "成长需求、面对挑战、寻求改进",
+                        coping: "定期反思，保持开放心态，采取行动改进"
+                    },
+                    {
+                        name: "满意",
+                        description: "对现状和成果的满足感",
+                        cause: "需求被满足、努力有成果",
+                        coping: "感恩已有，享受当下，适度追求进步"
+                    },
+                    {
+                        name: "冷静",
+                        description: "平和镇定的情绪状态",
+                        cause: "情绪调节能力强、环境稳定",
+                        coping: "保持这种状态，在压力下运用放松技巧"
+                    }
+                ]
+            },
+            "灰色": {
+                color: "#808080",
+                emotions: [
+                    {
+                        name: "不耐烦",
+                        description: "对拖延或低效的厌恶",
+                        cause: "时间压力、效率标准高",
+                        coping: "调整期望，有效沟通，寻找替代方案"
+                    },
+                    {
+                        name: "抑郁",
+                        description: "持续的情绪低落和兴趣丧失",
+                        cause: "生理因素、生活压力、创伤事件",
+                        coping: "寻求专业帮助，建立支持系统，保持规律作息"
+                    },
+                    {
+                        name: "焦虑",
+                        description: "对未来的担忧和不安",
+                        cause: "不确定性、高压环境、过度思考",
+                        coping: "正念练习，制定计划，渐进式暴露"
+                    },
+                    {
+                        name: "纠结",
+                        description: "在两个或多个选择间难以决定",
+                        cause: "害怕犯错、选项各有优劣",
+                        coping: "列出利弊，设定决策时限，接受不完美"
+                    },
+                    {
+                        name: "紧张",
+                        description: "身体和心理的紧绷状态",
+                        cause: "面临挑战、重要事件前",
+                        coping: "放松训练，充分准备，积极自我对话"
+                    }
+                ]
+            },
+            "蓝色": {
+                color: "#0000FF",
+                emotions: [
+                    {
+                        name: "迷茫",
+                        description: "缺乏方向和目标的状态",
+                        cause: "人生转折点、信息过载、价值观冲突",
+                        coping: "探索兴趣，寻求指导，从小目标开始"
+                    },
+                    {
+                        name: "孤单",
+                        description: "感到与他人隔绝的孤独感",
+                        cause: "社交孤立、缺乏亲密关系、不被理解",
+                        coping: "主动联系他人，参加社群活动，培养兴趣爱好"
+                    },
+                    {
+                        name: "无聊",
+                        description: "对当前活动缺乏兴趣和投入",
+                        cause: "缺乏挑战、单调环境、意义感缺失",
+                        coping: "尝试新事物，设定挑战，寻找意义"
+                    },
+                    {
+                        name: "提不起劲",
+                        description: "缺乏动力和能量的状态",
+                        cause: "疲惫、目标模糊、过度压力",
+                        coping: "休息恢复，明确目标，分解任务"
+                    },
+                    {
+                        name: "害羞",
+                        description: "在社交场合中的拘谨和不自在",
+                        cause: "害怕被评价、缺乏社交经验",
+                        coping: "渐进式社交练习，准备话题，关注他人"
+                    },
+                    {
+                        name: "怀念",
+                        description: "对过去美好时光的思念",
+                        cause: "触景生情、人生阶段转变",
+                        coping: "珍惜回忆但活在当下，创造新的美好经历"
+                    }
+                ]
+            },
+            "紫色": {
+                color: "#800080",
+                emotions: [
+                    {
+                        name: "放弃",
+                        description: "决定停止努力或追求",
+                        cause: "长期受挫、资源耗尽、目标不切实际",
+                        coping: "评估是否值得继续，调整目标，寻求支持"
+                    },
+                    {
+                        name: "疲倦",
+                        description: "身体和心理的疲惫状态",
+                        cause: "过度劳累、睡眠不足、长期压力",
+                        coping: "充分休息，调整工作量，寻求帮助"
+                    },
+                    {
+                        name: "无力",
+                        description: "感到缺乏能力和控制感",
+                        cause: "面对巨大挑战、多次失败",
+                        coping: "分解问题，寻求帮助，关注小的进步"
+                    },
+                    {
+                        name: "压抑",
+                        description: "情绪被抑制无法表达的状态",
+                        cause: "环境不允许表达、自我压抑",
+                        coping: "找到安全表达方式，逐步释放情绪，寻求支持"
+                    },
+                    {
+                        name: "绝望",
+                        description: "对未来的极度悲观和无望",
+                        cause: "长期困境、多次失败、支持系统薄弱",
+                        coping: "寻求专业帮助，寻找微小希望，建立支持网络"
+                    },
+                    {
+                        name: "恐惧",
+                        description: "对威胁或危险的强烈担忧",
+                        cause: "不确定性、创伤经历、过度想象",
+                        coping: "了解事实，渐进暴露，学习放松技巧"
+                    },
+                    {
+                        name: "被背叛",
+                        description: "因信任被破坏而产生的痛苦",
+                        cause: "亲密关系中的欺骗、背弃承诺",
+                        coping: "允许自己悲伤，重新评估关系，逐步重建信任"
+                    }
+                ]
+            }
+        };
+
+        // DOM 元素
+        const pieChartCanvas = document.getElementById('emotionPieChart');
+        const emotionsList = document.getElementById('emotionsList');
+        const cardContainer = document.getElementById('cardContainer');
+        const emotionName = document.getElementById('emotionName');
+        const emotionCategory = document.getElementById('emotionCategory');
+        const cardBack = document.getElementById('cardBack');
+        const backToListButton = document.getElementById('backToList');
+        const backToChartButton = document.getElementById('backToChart');
+        const legendContainer = document.getElementById('emotionLegend');
+        const card = document.querySelector('.card');
+
+        // 全局变量
+        let selectedCategory = null;
+        let ctx = pieChartCanvas.getContext('2d');
+        let totalEmotions = 0;
+
+        // 计算总情绪数量
+        function calculateTotalEmotions() {
+            totalEmotions = 0;
+            for (const category in emotionsData) {
+                totalEmotions += emotionsData[category].emotions.length;
+            }
+            return totalEmotions;
+        }
+
+        // 绘制饼图
+        function drawPieChart() {
+            const width = pieChartCanvas.width;
+            const height = pieChartCanvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2 - 10;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, width, height);
+            
+            let startAngle = 0;
+            
+            for (const category in emotionsData) {
+                const categoryData = emotionsData[category];
+                const sliceAngle = (2 * Math.PI * categoryData.emotions.length) / totalEmotions;
+                
+                // 绘制扇形
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                ctx.closePath();
+                ctx.fillStyle = categoryData.color;
+                ctx.fill();
+                
+                // 绘制扇形边框
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 添加标签
+                const labelAngle = startAngle + sliceAngle / 2;
+                const labelRadius = radius * 0.7;
+                const labelX = centerX + Math.cos(labelAngle) * labelRadius;
+                const labelY = centerY + Math.sin(labelAngle) * labelRadius;
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(category, labelX, labelY);
+                
+                startAngle += sliceAngle;
+            }
+        }
+
+        // 创建图例
+        function createLegend() {
+            for (const category in emotionsData) {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = emotionsData[category].color;
+                
+                const text = document.createElement('span');
+                text.className = 'legend-text';
+                text.textContent = `${category} (${emotionsData[category].emotions.length})`;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(text);
+                legendContainer.appendChild(legendItem);
+            }
+        }
+
+        // 显示情绪列表
+        function showEmotionsList(category) {
+            selectedCategory = category;
+            emotionsList.innerHTML = '';
+            emotionsList.style.display = 'flex';
+            cardContainer.style.display = 'none';
+            backToChartButton.style.display = 'block';
+            
+            emotionsData[category].emotions.forEach(emotion => {
+                const emotionItem = document.createElement('div');
+                emotionItem.className = 'emotion-item';
+                emotionItem.textContent = emotion.name;
+                emotionItem.style.backgroundColor = emotionsData[category].color;
+                
+                emotionItem.addEventListener('click', () => {
+                    showEmotionCard(emotion, category);
+                });
+                
+                emotionsList.appendChild(emotionItem);
+            });
+        }
+
+        // 显示情绪卡片
+        function showEmotionCard(emotion, category) {
+            emotionName.textContent = emotion.name;
+            emotionCategory.textContent = category;
+            
+            cardBack.innerHTML = `
+                <h3>${emotion.name}</h3>
+                <p>${emotion.description}</p>
+                <p class="section-title">为什么会出现：</p>
+                <p>${emotion.cause}</p>
+                <p class="section-title">如何应对：</p>
+                <p>${emotion.coping}</p>
+            `;
+            
+            card.style.border = `5px solid ${emotionsData[category].color}`;
+            
+            emotionsList.style.display = 'none';
+            cardContainer.style.display = 'block';
+            
+            // 确保卡片是正面朝上
+            card.classList.remove('flipped');
+        }
+
+        // 初始化饼图点击事件
+        function initPieChartClick() {
+            pieChartCanvas.addEventListener('click', function(event) {
+                const rect = pieChartCanvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                const centerX = pieChartCanvas.width / 2;
+                const centerY = pieChartCanvas.height / 2;
+                const radius = Math.min(pieChartCanvas.width, pieChartCanvas.height) / 2 - 10;
+                
+                // 计算点击点与圆心的距离
+                const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+                
+                // 如果点击点在饼图范围内
+                if (distance <= radius) {
+                    // 计算点击点的角度
+                    let angle = Math.atan2(y - centerY, x - centerX);
+                    if (angle < 0) angle += 2 * Math.PI;
+                    
+                    // 确定点击了哪个扇形
+                    let startAngle = 0;
+                    for (const category in emotionsData) {
+                        const sliceAngle = (2 * Math.PI * emotionsData[category].emotions.length) / totalEmotions;
+                        
+                        if (angle >= startAngle && angle < startAngle + sliceAngle) {
+                            showEmotionsList(category);
+                            break;
+                        }
+                        
+                        startAngle += sliceAngle;
+                    }
+                }
+            });
+        }
+
+        // 初始化
+        function init() {
+            // 计算总情绪数
+            calculateTotalEmotions();
+            
+            // 设置画布尺寸
+            pieChartCanvas.width = 300;
+            pieChartCanvas.height = 300;
+            
+            // 绘制饼图
+            drawPieChart();
+            
+            // 创建图例
+            createLegend();
+            
+            // 初始化饼图点击事件
+            initPieChartClick();
+            
+            // 返回列表按钮事件
+            backToListButton.addEventListener('click', () => {
+                cardContainer.style.display = 'none';
+                emotionsList.style.display = 'flex';
+            });
+            
+            // 返回饼图按钮事件
+            backToChartButton.addEventListener('click', () => {
+                emotionsList.style.display = 'none';
+                cardContainer.style.display = 'none';
+                backToChartButton.style.display = 'none';
+            });
+            
+            // 卡片点击翻转事件
+            card.addEventListener('click', () => {
+                card.classList.toggle('flipped');
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
